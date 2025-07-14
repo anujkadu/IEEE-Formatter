@@ -2,6 +2,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import jsPDF from "jspdf";
+import { Document as DocxDocument, Packer, Paragraph, TextRun } from "docx";
 
 interface DocumentPreviewProps {
   document: any;
@@ -20,30 +22,140 @@ export function DocumentPreview({ document, documentId }: DocumentPreviewProps) 
   };
 
   const handleExport = async (format: 'pdf' | 'docx' | 'latex') => {
-    if (!documentId) return;
-    
+    if (!document) return;
     try {
-      const response = await fetch(`/api/documents/${documentId}/export?format=${format}`);
-      
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${document.title || 'document'}.${format}`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-      } else {
-        const data = await response.json();
-        alert(data.message || "Export functionality coming soon");
+      if (format === 'pdf') {
+        exportAsPDF(document);
+      } else if (format === 'docx') {
+        exportAsDocx(document);
+      } else if (format === 'latex') {
+        exportAsLatex(document);
       }
     } catch (error) {
       console.error("Export error:", error);
       alert("Export failed");
     }
   };
+
+  // Helper: Export as PDF using jsPDF
+  function exportAsPDF(doc: any) {
+    const pdf = new jsPDF();
+    let y = 10;
+    pdf.setFont("Times", "normal");
+    pdf.setFontSize(18);
+    pdf.text(doc.title || "Document", 10, y);
+    y += 10;
+    pdf.setFontSize(12);
+    if (doc.authors && doc.authors.length > 0) {
+      pdf.text(doc.authors.join(", "), 10, y);
+      y += 8;
+    }
+    if (doc.affiliations && doc.affiliations.length > 0) {
+      pdf.text(doc.affiliations.join(", "), 10, y);
+      y += 8;
+    }
+    if (doc.abstract) {
+      pdf.setFont(undefined, "bold");
+      pdf.text("Abstract", 10, y);
+      y += 8;
+      pdf.setFont(undefined, "normal");
+      pdf.text(doc.abstract, 10, y, { maxWidth: 180 });
+      y += 12;
+    }
+    if (doc.sections) {
+      doc.sections.forEach((section: any) => {
+        pdf.setFont(undefined, "bold");
+        pdf.text(section.title, 10, y);
+        y += 8;
+        pdf.setFont(undefined, "normal");
+        const lines = pdf.splitTextToSize(section.content, 180);
+        pdf.text(lines, 10, y);
+        y += lines.length * 6 + 4;
+      });
+    }
+    if (doc.references && doc.references.length > 0) {
+      pdf.setFont(undefined, "bold");
+      pdf.text("REFERENCES", 10, y);
+      y += 8;
+      pdf.setFont(undefined, "normal");
+      doc.references.forEach((ref: string) => {
+        pdf.text(ref, 10, y);
+        y += 6;
+      });
+    }
+    pdf.save(`${doc.title || 'document'}.pdf`);
+  }
+
+  // Helper: Export as DOCX using docx
+  async function exportAsDocx(doc: any) {
+    const paragraphs = [];
+    paragraphs.push(new Paragraph({ text: doc.title || "Document", heading: "TITLE" }));
+    if (doc.authors && doc.authors.length > 0) {
+      paragraphs.push(new Paragraph(doc.authors.join(", ")));
+    }
+    if (doc.affiliations && doc.affiliations.length > 0) {
+      paragraphs.push(new Paragraph(doc.affiliations.join(", ")));
+    }
+    if (doc.abstract) {
+      paragraphs.push(new Paragraph({ text: "Abstract", heading: "HEADING_1" }));
+      paragraphs.push(new Paragraph(doc.abstract));
+    }
+    if (doc.sections) {
+      doc.sections.forEach((section: any) => {
+        paragraphs.push(new Paragraph({ text: section.title, heading: "HEADING_1" }));
+        paragraphs.push(new Paragraph(section.content));
+      });
+    }
+    if (doc.references && doc.references.length > 0) {
+      paragraphs.push(new Paragraph({ text: "REFERENCES", heading: "HEADING_1" }));
+      doc.references.forEach((ref: string) => {
+        paragraphs.push(new Paragraph(ref));
+      });
+    }
+    const docx = new DocxDocument({ sections: [{ properties: {}, children: paragraphs }] });
+    const blob = await Packer.toBlob(docx);
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${doc.title || 'document'}.docx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  }
+
+  // Helper: Export as LaTeX (.tex file)
+  function exportAsLatex(doc: any) {
+    let latex = `\\documentclass{article}\n\\usepackage[utf8]{inputenc}\n\\title{${doc.title || 'Document'}}\n`;
+    if (doc.authors && doc.authors.length > 0) {
+      latex += `\\author{${doc.authors.join(", ")}}\n`;
+    }
+    latex += `\\begin{document}\n\\maketitle\n`;
+    if (doc.abstract) {
+      latex += `\\begin{abstract}\n${doc.abstract}\n\\end{abstract}\n`;
+    }
+    if (doc.sections) {
+      doc.sections.forEach((section: any) => {
+        latex += `\\section{${section.title}}\n${section.content}\n`;
+      });
+    }
+    if (doc.references && doc.references.length > 0) {
+      latex += `\\section*{References}\n`;
+      doc.references.forEach((ref: string) => {
+        latex += `\\noindent ${ref}\\\\\n`;
+      });
+    }
+    latex += '\\end{document}';
+    const blob = new Blob([latex], { type: 'text/x-latex' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${doc.title || 'document'}.tex`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  }
 
   if (!document) {
     return (
@@ -89,7 +201,7 @@ export function DocumentPreview({ document, documentId }: DocumentPreviewProps) 
             <Button
               onClick={() => handleExport('pdf')}
               className="bg-accent text-white hover:bg-green-600"
-              disabled={!documentId}
+              disabled={!document}
               size="sm"
             >
               <i className="fas fa-file-pdf mr-2"></i>PDF
@@ -97,7 +209,7 @@ export function DocumentPreview({ document, documentId }: DocumentPreviewProps) 
             <Button
               onClick={() => handleExport('docx')}
               className="bg-blue-600 text-white hover:bg-blue-700"
-              disabled={!documentId}
+              disabled={!document}
               size="sm"
             >
               <i className="fas fa-file-word mr-2"></i>DOCX
@@ -105,7 +217,7 @@ export function DocumentPreview({ document, documentId }: DocumentPreviewProps) 
             <Button
               onClick={() => handleExport('latex')}
               className="bg-purple-600 text-white hover:bg-purple-700"
-              disabled={!documentId}
+              disabled={!document}
               size="sm"
             >
               <i className="fas fa-code mr-2"></i>LaTeX

@@ -162,6 +162,8 @@ export default function Home() {
     setCurrentDocument(document);
     setFormattedDocument(formatted);
     setComplianceScore(compliance);
+    if (!window.__ieeeDocs) window.__ieeeDocs = {};
+    window.__ieeeDocs[document.id] = document;
   };
 
   const handleDocumentProcessed = (document: any, formatted: any, compliance: any) => {
@@ -169,6 +171,8 @@ export default function Home() {
     setFormattedDocument(formatted);
     setComplianceScore(compliance);
     setIsProcessing(false);
+    if (!window.__ieeeDocs) window.__ieeeDocs = {};
+    window.__ieeeDocs[document.id] = document;
   };
 
   const handleProcessingStarted = () => {

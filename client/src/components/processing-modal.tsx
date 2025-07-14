@@ -1,4 +1,4 @@
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { useState, useEffect } from "react";
 
@@ -19,6 +19,8 @@ export function ProcessingModal() {
   return (
     <Dialog open={true}>
       <DialogContent className="max-w-md">
+        <DialogTitle>Processing</DialogTitle>
+        <DialogDescription>AI is analyzing and reformatting your paper. This may take a few moments.</DialogDescription>
         <div className="text-center p-6">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-4"></div>
           <h3 className="text-lg font-semibold text-secondary mb-2">Processing Your Request</h3>
