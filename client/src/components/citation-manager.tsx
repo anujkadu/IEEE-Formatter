@@ -1,3 +1,6 @@
+
+
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -40,12 +43,12 @@ interface CitationManagerProps {
   onFiguresUpdate?: (figures: Figure[]) => void;
 }
 
-export function CitationManager({ 
-  documentId, 
-  citations = [], 
-  figures = [], 
-  onCitationsUpdate, 
-  onFiguresUpdate 
+export function CitationManager({
+  documentId,
+  citations = [],
+  figures = [],
+  onCitationsUpdate,
+  onFiguresUpdate
 }: CitationManagerProps) {
   const [localCitations, setLocalCitations] = useState<Citation[]>(citations);
   const [localFigures, setLocalFigures] = useState<Figure[]>(figures);
@@ -90,7 +93,7 @@ export function CitationManager({
       const updatedCitations = [...localCitations, citation];
       setLocalCitations(updatedCitations);
       onCitationsUpdate?.(updatedCitations);
-      
+
       setNewCitation({
         authors: [],
         title: '',
@@ -114,7 +117,7 @@ export function CitationManager({
       const updatedFigures = [...localFigures, figure];
       setLocalFigures(updatedFigures);
       onFiguresUpdate?.(updatedFigures);
-      
+
       setNewFigure({
         caption: '',
         type: 'image'

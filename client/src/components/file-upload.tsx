@@ -1,3 +1,5 @@
+
+
 import { useState, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -94,7 +96,7 @@ export function FileUpload({ onDocumentUploaded }: FileUploadProps) {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    
+
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) {
       handleFileSelect(files[0]);
@@ -118,7 +120,7 @@ export function FileUpload({ onDocumentUploaded }: FileUploadProps) {
         <h2 className="text-lg font-semibold text-secondary mb-4">
           <i className="fas fa-upload mr-2 text-primary"></i>Upload Research Paper
         </h2>
-        
+
         <div
           className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
             isDragging
@@ -133,7 +135,7 @@ export function FileUpload({ onDocumentUploaded }: FileUploadProps) {
           <i className="fas fa-file-pdf text-4xl text-gray-400 mb-4"></i>
           <p className="text-gray-600 mb-2">Drop your PDF here or click to browse</p>
           <p className="text-sm text-gray-500">Supports PDF files up to 10MB</p>
-          
+
           <input
             ref={fileInputRef}
             type="file"
@@ -142,7 +144,7 @@ export function FileUpload({ onDocumentUploaded }: FileUploadProps) {
             onChange={handleFileInputChange}
           />
         </div>
-        
+
         {isUploading && (
           <div className="mt-4">
             <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
